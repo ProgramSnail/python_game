@@ -1,6 +1,8 @@
 import curses
 import random
 
+MAP_POS_X = 10
+MAP_POS_Y = 10
 
 SIMPLE_COLOR = 1
 ACTIVE_COLOR = 2
@@ -30,11 +32,20 @@ def end_curses(stdscr):
 
 def generate_map(map, seed, sz_x, sz_y, map_symbols):
 	random.seed(seed)
+
+	rand_sum = 0
+	for i in map_symbols:
+		rand_sum += map_symbols[i][1]
+
 	for i in range(0, sz_x):
 		map.append(str())
 		for j in range(0, sz_y):
-			x = random.randint(0, len(map_symbols) - 1)
-			map[i] += map_symbols[x]
+			x = random.randint(1, rand_sum)
+			for k in map_symbols:
+				i -= map_symbols[k][1]
+				if i <= 0:
+					map[i] += map_symbols[k][0]
+					break
 
 
 def game_step(map):
@@ -43,6 +54,8 @@ def game_step(map):
 
 def draw(stdscr, map):
 	stdscr.addstr(0, 0, "Hello World!", curses.color_pair(SIMPLE_COLOR))
+	for i in map:
+		stdscr.addstr(i + MAP_POS_Y, MAP_POS_X, map[i], curses.color_pair(SIMPLE_COLOR))
 
 
 def input(stdscr):
@@ -50,7 +63,7 @@ def input(stdscr):
 
 
 def main():
-	map_symbols = [' ', '#', '$', '&', '*']
+	map_symbols = [{'#', 10}, {'$', 1}, {'&', 2}, {'*', 1}]
 
 	stdscr = begin_curses()
 
