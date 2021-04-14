@@ -1,6 +1,5 @@
 import curses
 import random
-import time
 import copy
 
 MAP_POS_X = 16
@@ -12,6 +11,9 @@ EMPTY = ' '
 DOOR = '>'
 MARK = '!'
 WALL = '#'
+GOLD = '$'
+WEAPON = '/'
+ADD_HEALTH = '+'
 
 SIMPLE_COLOR = 1
 ACTIVE_COLOR = 2
@@ -121,7 +123,7 @@ def generate_map(map, sz_x, sz_y, map_symbols,
 
 
 def map_mark_dfs(map, i, j):
-	if map[i][j][0] != EMPTY:
+	if map[i][j][0] == WALL or map[i][j][0] == MARK:
 		return []
 
 	positions = [(i, j)]
@@ -205,6 +207,12 @@ def draw(stdscr, map, monsters, player_state):
 	stdscr.addstr(MAP_POS_Y - 1, 0, "Lives: " + str(player_state[1]),
 		curses.color_pair(HIGHLIGHTED_COLOR))
 
+	stdscr.addstr(MAP_POS_Y, 0, "Weapon: " + str(player_state[2]),
+		curses.color_pair(HIGHLIGHTED_COLOR))
+
+	stdscr.addstr(MAP_POS_Y + 1, 0, "Gold: " + str(player_state[3]),
+		curses.color_pair(HIGHLIGHTED_COLOR))
+
 	for i in range(len(map)):
 		stdscr.addstr(MAP_POS_Y - 1, i + MAP_POS_X,
 			'-', curses.color_pair(SIMPLE_COLOR))
@@ -236,13 +244,13 @@ def input(stdscr): # not work
 	
 	try:
 		key = stdscr.getkey()
-		if key == 'w':
+		if key == 'w' or key == "KEY_UP":
 			m[1] -= 1
-		elif key == 's':
+		elif key == 's' or key == "KEY_DOWN":
 			m[1] += 1
-		elif key == 'a':
+		elif key == 'a' or key == "KEY_LEFT":
 			m[0] -= 1
-		elif key == 'd':
+		elif key == 'd' or key == "KEY_RIGHT":
 			m[0] += 1
 	except:
 		pass
@@ -253,29 +261,40 @@ def input(stdscr): # not work
 
 
 def move_player(map, player_state, pos_change):
-	new_player_pos = copy.deepcopy(player_state[0])
+	p = copy.deepcopy(player_state[0])
 
-	new_player_pos[0] += pos_change[0]
-	new_player_pos[1] += pos_change[1]
+	p[0] += pos_change[0]
+	p[1] += pos_change[1]
 
-	if map[new_player_pos[0]][new_player_pos[1]][0] != WALL:
-		player_state[0] = new_player_pos
+	x = map[p[0]][p[1]][0]
+
+	if x != WALL:
+		player_state[0] = p
+		if x == ADD_HEALTH:
+			player_state[1] += 1
+			map[p[0]][p[1]] = [EMPTY, SIMPLE_COLOR]
+		elif x == WEAPON:
+			player_state[2] += 1
+			map[p[0]][p[1]] = [EMPTY, SIMPLE_COLOR]
+		elif x == GOLD:
+			player_state[3] += 1
+			map[p[0]][p[1]] = [EMPTY, SIMPLE_COLOR]
 
 
 def main():
 	map_symbols = [
 		[[EMPTY, SIMPLE_COLOR], 30],
 		[[WALL, WALL_COLOR], 10],
-		[['$', GOLD_COLOR], 1],
-		[['/', WEAPON_COLOR], 2],
-		[['+', ADD_HEALTH_COLOR], 1]
+		[[GOLD, GOLD_COLOR], 1],
+		[[WEAPON, WEAPON_COLOR], 2],
+		[[ADD_HEALTH, ADD_HEALTH_COLOR], 1]
 	]
 
 	stdscr = begin_curses()
 
 	map_size = [20, 20]
 
-	player_state = [[0, 0], 10] # pos, lives
+	player_state = [[0, 0], 10, 0, 0] # pos, lives, weapon, money
 
 	map = []
 
