@@ -24,6 +24,20 @@ DOOR_COLOR = 8
 MONSTER_COLOR = 9
 ADD_HEALTH_COLOR = 10
 
+DIRECTIONS = [
+	[1, 0],
+	[-1, 0],
+	[0, 1],
+	[0, -1]
+]
+
+EXTENDED_DIRECTIONS = DIRECTIONS + [
+	[1, 1],
+	[1, -1],
+	[-1, 1],
+	[-1, -1]
+]
+
 
 def begin_curses():
 	stdscr = curses.initscr()
@@ -58,15 +72,24 @@ def end_curses(stdscr):
 	curses.endwin()
 
 
-"""
+
 def gen_map_step(map):
 	tmp_map = copy.deepcopy(map)
-	pass
-"""
+	for i in range(1, len(map) - 1):
+		for j in range(1, len(map[i]) - 1):
+			x = 0
+			for d in EXTENDED_DIRECTIONS:
+				if tmp_map[i][j] == WALL:
+					x += 1
+			if x < 2 or x >= 4:
+				map[i][j] = (EMPTY, SIMPLE_COLOR)
+			elif x == 3:
+				map[i][j] = (WALL, WALL_COLOR)
 
 
-#!! needed to add cellular automata !!
-def generate_map(map, sz_x, sz_y, map_symbols):
+def generate_map(map, sz_x, sz_y, map_symbols,
+				 automata_iterations, wall_rand_range,
+				 wall_rand_gen):
 	rand_sum = 0
 	for symbol in map_symbols:
 		rand_sum += symbol[1]
@@ -77,12 +100,24 @@ def generate_map(map, sz_x, sz_y, map_symbols):
 			if i == 0 or j == 0 or i == sz_x - 1 or j == sz_y - 1:
 			   	map[i].append([WALL, WALL_COLOR])
 			else:
+				if random.randint(1, wall_rand_range) <= wall_rand_gen:
+					map[i].append([WALL, WALL_COLOR])
+				else:
+					map[i].append([EMPTY, SIMPLE_COLOR])
+
+	for i in range(automata_iterations):
+		gen_map_step(map)
+
+	for i in range(1, len(map) - 1):
+		for j in range(1, len(map[i]) - 1):
+			if (map[i][j][0] == EMPTY):
 				x = random.randint(1, rand_sum)
 				for symbol in map_symbols:
 					x -= symbol[1]
 					if x <= 0:
-						map[i].append(symbol[0])
+						map[i][j] = symbol[0]
 						break
+
 
 
 def map_mark_dfs(map, i, j):
@@ -91,15 +126,8 @@ def map_mark_dfs(map, i, j):
 
 	positions = [(i, j)]
 
-	directions = [
-		[1, 0],
-		[-1, 0],
-		[0, 1],
-		[0, -1]
-	]
-
 	map[i][j] = (MARK, SIMPLE_COLOR)
-	for d in directions:
+	for d in DIRECTIONS:
 	# walls on all sides, then no check needed there
 		new_positions = map_mark_dfs(map, i + d[0], j + d[1])
 		for pos in new_positions:
@@ -251,7 +279,7 @@ def main():
 
 	map = []
 
-	generate_map(map, map_size[0], map_size[1], map_symbols)
+	generate_map(map, map_size[0], map_size[1], map_symbols, 100, 100, 45)
 
 	doors = generate_doors(map)
 
