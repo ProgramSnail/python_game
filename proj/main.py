@@ -235,6 +235,7 @@ def draw(stdscr, map, monsters, active_weapon, player_state):
 		"Health: " + str(player_state[P_HEALTH]),
 		"Weapon: " + str(player_state[P_WEAPON]),
 		"Gold: " + str(player_state[P_GOLD]),
+		"Score: " + str(player_state[P_SCORE]),
 		"",
 		"Help:",
 		"",
@@ -340,14 +341,18 @@ def move_player(map, player_state, pos_change):
 
 
 def use_weapon(map, active_weapon, player_state, direction):
+	if player_state[P_WEAPON] <= 0:
+		return
 	p = copy.deepcopy(player_state[P_POS])
 	p[0] += direction[0]
 	p[1] += direction[1]
 	if map[p[0]][p[1]][0] == WALL:
 		if p[0] != 0 and p[1] != 0 and p[0] != len(map) - 1 and p[1] != len(map[0]):
 			map[p[0]][p[1]] = [EMPTY, SIMPLE_COLOR]
+			player_state[P_WEAPON] -= 1
 	else: 
 		active_weapon.append([p, copy.deepcopy(direction)])
+		player_state[P_WEAPON] -= 1
 
 
 def player_actions(map, doors, active_weapon, player_state, player_action):
