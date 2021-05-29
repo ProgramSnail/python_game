@@ -2,71 +2,7 @@ import curses
 import random
 import copy
 
-MAP_POS_X = 16
-MAP_POS_Y = 2
-
-WEAPON_SPEED = 1
-
-PLAYER = 'P'
-MONSTER = 'M'
-EMPTY = ' '
-DOOR = '>'
-MARK = '!'
-WALL = '#'
-GOLD = '$'
-WEAPON = '/'
-ACTIVE_WEAPON = '.'
-ADD_HEALTH = '+'
-SCORE = '@'
-
-SIMPLE_COLOR = 1
-ACTIVE_COLOR = 2
-WALL_COLOR = 3
-GOLD_COLOR = 4
-WEAPON_COLOR = 5
-HIGHLIGHTED_COLOR = 6
-PLAYER_COLOR = 7
-DOOR_COLOR = 8
-MONSTER_COLOR = 9
-ADD_HEALTH_COLOR = 10
-SCORE_COLOR = 11
-ACTIVE_WEAPON_COLOR = 12
-
-MONSTER_DAMAGE = 1
-
-P_POS = 0
-P_HEALTH = 1
-P_WEAPON = 2
-P_GOLD = 3
-P_ACTIVE_DOOR = 4
-P_SCORE = 5
-
-MOVE_UP_ACTION = "KEY_UP"
-MOVE_DOWN_ACTION = "KEY_DOWN"
-MOVE_LEFT_ACTION = "KEY_LEFT"
-MOVE_RIGHT_ACTION = "KEY_RIGHT"
-
-ATTACK_UP_ACTION = 'w'
-ATTACK_DOWN_ACTION = 's'
-ATTACK_LEFT_ACTION = 'a'
-ATTACK_RIGHT_ACTION = 'd'
-
-NEXT_DOOR_ACTION = 'q'
-PREV_DOOR_ACTION = 'e'
-
-DIRECTIONS = [
-	[0, -1],
-	[0, 1],
-	[-1, 0],
-	[1, 0]
-]
-
-EXTENDED_DIRECTIONS = DIRECTIONS + [
-	[1, 1],
-	[1, -1],
-	[-1, 1],
-	[-1, -1]
-]
+from var_config import *
 
 
 def begin_curses():
@@ -192,11 +128,9 @@ def generate_monsters(map, rand_range, rand_monster):
 	monsters = []
 	for i in range(len(map)):
 		for j in range(len(map[i])):
-			if (map[i][j][0] == EMPTY):
-				if random.randint(1, rand_range) <= rand_monster:
-					
-					monsters.append([[i, j], random_direction()])
-					# position, move direction
+			if map[i][j][0] == EMPTY and \
+			   random.randint(1, rand_range) <= rand_monster:
+				monsters.append([[i, j], random_direction()])
 
 	return monsters
 
@@ -351,17 +285,6 @@ def use_weapon(map, active_weapon, player_state, direction):
 
 
 def player_actions(map, doors, active_weapon, player_state, player_action):
-	if doors[player_state[P_ACTIVE_DOOR]]:
-		if player_action == NEXT_DOOR_ACTION:
-			player_state[P_ACTIVE_DOOR] += 1
-			player_state[P_ACTIVE_DOOR] %= len(doors)
-			player_state[P_POS] = copy.deepcopy(
-				doors[player_state[P_ACTIVE_DOOR]])
-		elif player_action == PREV_DOOR_ACTION:
-			player_state[P_ACTIVE_DOOR] = (player_state[P_ACTIVE_DOOR]
-				+ len(doors) - 1) % len(doors)
-			player_state[P_POS] = copy.deepcopy(
-				doors[player_state[P_ACTIVE_DOOR]])
 	k = -1
 	if player_action == ATTACK_UP_ACTION:
 		k = 0
@@ -374,7 +297,20 @@ def player_actions(map, doors, active_weapon, player_state, player_action):
 	
 	if k >= 0:
 		use_weapon(map, active_weapon, player_state, DIRECTIONS[k])
+
+	if not doors[player_state[P_ACTIVE_DOOR]]:
+		return
 	
+	if player_action == NEXT_DOOR_ACTION:
+		player_state[P_ACTIVE_DOOR] += 1
+		player_state[P_ACTIVE_DOOR] %= len(doors)
+		player_state[P_POS] = copy.deepcopy(
+			doors[player_state[P_ACTIVE_DOOR]])
+	elif player_action == PREV_DOOR_ACTION:
+		player_state[P_ACTIVE_DOOR] = (player_state[P_ACTIVE_DOOR]
+			+ len(doors) - 1) % len(doors)
+		player_state[P_POS] = copy.deepcopy(
+			doors[player_state[P_ACTIVE_DOOR]])
 
 
 def move_weapon(map, active_weapon, player_state): # needed to test
@@ -466,5 +402,5 @@ def main():
 	else:
 		print("You lose(")
 
-
-main()
+if (__name__ == "__main__"):
+	main()
